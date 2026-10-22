@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -28,6 +29,15 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Hi, {profile?.full_name ?? "..."} 👋</Text>
       <Text style={styles.role}>Role: {profile?.role ?? "..."}</Text>
+      <Pressable
+        style={[
+          styles.button,
+          { backgroundColor: "#2563eb", marginBottom: 12 },
+        ]}
+        onPress={() => router.push("/pets")}
+      >
+        <Text style={styles.buttonText}>My Pets</Text>
+      </Pressable>
       <Pressable style={styles.button} onPress={() => supabase.auth.signOut()}>
         <Text style={styles.buttonText}>Log Out</Text>
       </Pressable>
