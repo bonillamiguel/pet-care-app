@@ -1,18 +1,38 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { supabase } from "@/lib/supabase";
+import { Session } from "@supabase/supabase-js";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { useEffect, useState } from "react";
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+export default function RootLayout() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const segments = useSegments();
+  const router = useRouter();
 
-SplashScreen.preventAutoHideAsync();
+  useEffect(() => {
+    // Check if already logged in
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setLoading(false);
+    });
+    // Listen for login / logout
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) =>
+      setSession(s),
+    );
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
-  );
+  useEffect(() => {
+    if (loading) return;
+    const onLoginScreen = segments[0] === "login";
+    if (!session && !onLoginScreen) {
+      router.replace("/login"); // not logged in → go to login
+    } else if (session && onLoginScreen) {
+      router.replace("/"); // logged in → go to home
+    }
+  }, [session, loading, segments]);
+
+  if (loading) return null;
+
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
